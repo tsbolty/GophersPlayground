@@ -18,5 +18,8 @@ RUN apk add --no-cache ca-certificates
 
 COPY --from=builder /app/server /server
 
+# Document that the service listens on port 8080.
+EXPOSE 8080
+
 # Run the web service on container startup.
 CMD ["/server"]

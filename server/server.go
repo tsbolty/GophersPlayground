@@ -18,6 +18,12 @@ func main() {
 		port = defaultPort
 	}
 
+	db, dbErr := OpenDB()
+	if dbErr != nil {
+		log.Fatalf("Could not connect to db: %v", dbErr)
+	}
+	defer db.Close()
+
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
