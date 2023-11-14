@@ -8,16 +8,21 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/tsbolty/GophersPlayground/graph/model"
+	"github.com/tsbolty/GophersPlayground/db/models/todos"
 )
 
-// CreateTodo is the resolver for the createTodo field.
-func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
-	panic(fmt.Errorf("not implemented: CreateTodo - createTodo"))
+type NewTodo struct {
+	Text   string
+	UserID string
 }
 
+// CreateTodo is the resolver for the createTodo field.
+// func (r *mutationResolver) CreateTodo(ctx context.Context, input NewTodo) (*todos.Todo, error) {
+// 	panic(fmt.Errorf("not implemented: CreateTodo - createTodo"))
+// }
+
 // Todos is the resolver for the todos field.
-func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
+func (r *queryResolver) Todos(ctx context.Context) ([]*todos.Todo, error) {
 	panic(fmt.Errorf("not implemented: Todos - todos"))
 }
 

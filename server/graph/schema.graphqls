@@ -1,17 +1,14 @@
-# GraphQL schema example
-#
-# https://gqlgen.com/getting-started/
-
 type Todo {
   id: ID!
   text: String!
   done: Boolean!
-  user: User!
+  userId: Int!
 }
 
 type User {
   id: ID!
   name: String!
+  email: String!
 }
 
 type Query {
@@ -23,6 +20,12 @@ input NewTodo {
   userId: String!
 }
 
+input NewUser {
+  name: String!
+  email: String!
+}
+
 type Mutation {
   createTodo(input: NewTodo!): Todo!
+  createUser(input: NewUser!): User!
 }

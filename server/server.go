@@ -7,6 +7,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/tsbolty/GophersPlayground/db/models/services"
 	"github.com/tsbolty/GophersPlayground/graph"
 )
 
@@ -29,7 +30,14 @@ func main() {
 	}
 	defer sqlDB.Close()
 
-	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
+	store := NewStore(dbInstance)
+	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
+		Resolvers: &graph.Resolver{
+			ComplexService: &services.ComplexService{
+				UserRepo: store.UserRepository,
+				TodoRepo: store.TodoRepository,
+			},
+		}}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
