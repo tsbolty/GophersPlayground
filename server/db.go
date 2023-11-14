@@ -1,40 +1,61 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"os"
-	"time"
 
-	_ "github.com/lib/pq"
+	"github.com/tsbolty/GophersPlayground/db/models/todos"
+	"github.com/tsbolty/GophersPlayground/db/models/users"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
-func connectDB(maxRetries int) (*sql.DB, error) {
-	dbURL := os.Getenv("DATABASE_URL")
-	log.Println("DATABASE CONNECTION STRING!!!!!:", dbURL)
-
-	var db *sql.DB
-	var err error
-	for i := 0; i < maxRetries; i++ {
-		db, err = sql.Open("postgres", dbURL)
-		if err == nil {
-			err = db.Ping()
-			if err == nil {
-				return db, nil
-			}
-		}
-		log.Printf("Could not connect to db: %v, retrying...", err)
-		time.Sleep(2 * time.Second) // Wait for two seconds before the retry
-	}
-	return nil, fmt.Errorf("after %d attempts, last error: %s", maxRetries, err)
+// You can define a struct to hold your GORM DB connection
+type Store struct {
+	DB             *gorm.DB
+	UserRepository users.UserRepository
+	TodoRepository todos.TodoRepository
 }
 
-func OpenDB() (*sql.DB, error) {
-	db, err := connectDB(5)
-	if err != nil {
-		return nil, err
+// NewStore creates a new Store with a database connection
+func NewStore(db *gorm.DB) *Store {
+	return &Store{DB: db}
+}
+
+func InitializeDB() (*gorm.DB, error) {
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=UTC",
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_USER"),
+		os.Getenv("DB_PASS"),
+		os.Getenv("DB_NAME"),
+		os.Getenv("DB_PORT"),
+	)
+
+	log.Printf("Connecting to db: %s\n", dsn)
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err == nil {
+		migrate(db)
+		log.Println("Setting up db connection pool")
+		_, err := db.DB()
+		if err != nil {
+			log.Fatalf("Could not get sql.DB: %v", err)
+		}
+		log.Println("Connected to db successfully")
+		return db, nil
 	}
-	log.Printf("Connected to db %s successfully", os.Getenv("DB_NAME"))
-	return db, nil
+
+	log.Printf("Could not connect to db: %v", err)
+	return nil, err
+}
+
+func migrate(db *gorm.DB) error {
+	log.Println("Starting AutoMigrate...")
+	if err := db.AutoMigrate(&users.User{}, &todos.Todo{}); err != nil {
+		log.Fatalf("Error migrating database: %v", err)
+		return err
+	}
+	log.Println("AutoMigrate completed")
+	return nil
 }

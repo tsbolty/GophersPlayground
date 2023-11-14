@@ -5,11 +5,13 @@ services:
     build: ./server
     ports:
       - "8080:8080"
+    env_file:
+      - .env
     environment:
       - DATABASE_URL=postgres://${DB_USER}:${DB_PASS}@db:${DB_PORT}/${DB_NAME}?sslmode=disable
-      # - REDIS_URL=redis://${REDIS_HOST}:${REDIS_PORT}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
     image: postgres:16.0
@@ -21,7 +23,12 @@ services:
       - "${DB_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./server/schema:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${DB_USER}", "-d", "${DB_NAME}"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 5s
 
 volumes:
   postgres_data:

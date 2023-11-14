@@ -18,11 +18,16 @@ func main() {
 		port = defaultPort
 	}
 
-	db, dbErr := OpenDB()
+	dbInstance, dbErr := InitializeDB()
 	if dbErr != nil {
 		log.Fatalf("Could not connect to db: %v", dbErr)
 	}
-	defer db.Close()
+
+	sqlDB, err := dbInstance.DB()
+	if err != nil {
+		log.Fatalf("Could not get sql.DB: %v", err)
+	}
+	defer sqlDB.Close()
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
 
