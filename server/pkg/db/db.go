@@ -1,12 +1,12 @@
-package main
+package db
 
 import (
 	"fmt"
 	"log"
 	"os"
 
-	"github.com/tsbolty/GophersPlayground/db/models/todos"
-	"github.com/tsbolty/GophersPlayground/db/models/users"
+	todos "github.com/tsbolty/GophersPlayground/internal/todo"
+	users "github.com/tsbolty/GophersPlayground/internal/user"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

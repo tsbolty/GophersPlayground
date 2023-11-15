@@ -1,7 +1,6 @@
 package users
 
 import (
-	"errors"
 	"log"
 )
 
@@ -16,13 +15,13 @@ func NewUserService(repo UserRepository) *UserService {
 }
 
 func (s *UserService) CreateUser(email string, name string) (*User, error) {
-	foundUser, err := s.repo.FindByEmail(email)
+	// foundUser, err := s.repo.FindByEmail(email)
 
 	// Todo: Check if error is an actual db operation error
 
-	if foundUser != nil {
-		return nil, errors.New("user already exists")
-	}
+	// if foundUser != nil {
+	// 	return nil, errors.New("user already exists")
+	// }
 
 	user, err := s.repo.Create(email, name)
 	if err != nil {

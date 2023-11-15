@@ -1,23 +1,23 @@
 package services
 
 import (
-	"github.com/tsbolty/GophersPlayground/db/models/todos"
-	"github.com/tsbolty/GophersPlayground/db/models/users"
+	todos "github.com/tsbolty/GophersPlayground/internal/todo"
+	users "github.com/tsbolty/GophersPlayground/internal/user"
 )
 
-type ComplexService struct {
+type TodoService struct {
 	TodoRepo todos.TodoRepository
 	UserRepo users.UserRepository
 }
 
-func NewComplexService(userRepo users.UserRepository, todoRepo todos.TodoRepository) *ComplexService {
-	return &ComplexService{
+func NewTodoService(userRepo users.UserRepository, todoRepo todos.TodoRepository) *TodoService {
+	return &TodoService{
 		TodoRepo: todoRepo,
 		UserRepo: userRepo,
 	}
 }
 
-func (s *ComplexService) CreateTodoForUser(text string, userID uint) (*todos.Todo, error) {
+func (s *TodoService) CreateTodoForUser(text string, userID uint) (*todos.Todo, error) {
 	user, err := s.UserRepo.FindByID(userID) // Assuming FindByID is a method on UserRepository
 	if err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func (s *ComplexService) CreateTodoForUser(text string, userID uint) (*todos.Tod
 	return createdTodo, nil
 }
 
-func (s *ComplexService) GetTodosForUser(userID uint) ([]*todos.Todo, error) {
+func (s *TodoService) GetTodosForUser(userID uint) ([]*todos.Todo, error) {
 	foundUser, err := s.UserRepo.FindByID(userID)
 
 	if err != nil {

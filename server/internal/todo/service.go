@@ -1,11 +1,5 @@
 package todos
 
-// type TodoService interface {
-// 	CreateTodo(text string, userId uint) (*Todo, error)
-// 	GetTodoByID(id uint) (*Todo, error)
-// 	GetAllTodos() ([]*Todo, error)
-// }
-
 type TodoService struct {
 	repo TodoRepository
 }

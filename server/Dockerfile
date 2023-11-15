@@ -21,7 +21,7 @@ RUN go get github.com/urfave/cli/v2
 RUN go run github.com/99designs/gqlgen generate
 
 # Build the command inside the container.
-RUN CGO_ENABLED=0 GOOS=linux go build -v -o server
+RUN CGO_ENABLED=0 GOOS=linux go build -v -o server ./cmd/main
 
 # Use a Docker multi-stage build to create a lean production image.
 # https://docs.docker.com/develop/develop-images/multistage-build/
