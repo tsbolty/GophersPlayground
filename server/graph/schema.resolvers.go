@@ -7,23 +7,73 @@ package graph
 import (
 	"context"
 	"fmt"
+	"log"
+	"strconv"
 
-	"github.com/tsbolty/GophersPlayground/db/models/todos"
+	"github.com/tsbolty/GophersPlayground/graph/model"
 )
 
-type NewTodo struct {
-	Text   string
-	UserID string
+// CreateTodo is the resolver for the createTodo field.
+func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
+	userID, err := strconv.ParseUint(input.UserID, 10, 64)
+
+	// On 32-bit systems, check for overflow
+	if uint64(uint(userID)) != userID {
+		// Handle the overflow, for example, return a GraphQL error
+		return nil, fmt.Errorf("userID is too large for this platform")
+	}
+
+	todo, err := r.ComplexService.CreateTodoForUser(input.Text, uint(userID))
+
+	if err != nil {
+		return nil, err
+	}
+
+	graphqlTodo := &model.Todo{
+		ID:     fmt.Sprintf("%d", todo.ID),
+		Text:   todo.Text,
+		Done:   todo.Done,
+		UserID: int(todo.UserID),
+	}
+
+	return graphqlTodo, nil
 }
 
-// CreateTodo is the resolver for the createTodo field.
-// func (r *mutationResolver) CreateTodo(ctx context.Context, input NewTodo) (*todos.Todo, error) {
-// 	panic(fmt.Errorf("not implemented: CreateTodo - createTodo"))
-// }
+// CreateUser is the resolver for the createUser field.
+func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
+	log.Println("IN RESOLVER")
+
+	dbUser, err := r.UserService.CreateUser(input.Email, input.Name)
+	if err != nil {
+		return nil, err
+	}
+	return &model.User{
+		ID:    fmt.Sprintf("%d", dbUser.ID),
+		Name:  dbUser.Name,
+		Email: dbUser.Email,
+	}, nil
+}
 
 // Todos is the resolver for the todos field.
-func (r *queryResolver) Todos(ctx context.Context) ([]*todos.Todo, error) {
-	panic(fmt.Errorf("not implemented: Todos - todos"))
+func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
+	todos, err := r.TodoService.GetAllTodos()
+
+	if err != nil {
+		return nil, err
+	}
+
+	graphqlTodos := make([]*model.Todo, len(todos))
+
+	for i, todo := range todos {
+		graphqlTodos[i] = &model.Todo{
+			ID:     fmt.Sprintf("%d", todo.ID),
+			Text:   todo.Text,
+			Done:   todo.Done,
+			UserID: int(todo.UserID),
+		}
+	}
+
+	return graphqlTodos, nil
 }
 
 // Mutation returns MutationResolver implementation.

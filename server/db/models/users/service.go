@@ -2,42 +2,38 @@ package users
 
 import (
 	"errors"
+	"log"
 )
 
-type UserService interface {
-	CreateUser(email, name string) (*User, error)
-	GetUserByID(id uint) (*User, error)
-}
-
-type userService struct {
+type UserService struct {
 	repo UserRepository
 }
 
-func NewUserService(repo UserRepository) UserService {
-	return &userService{
+func NewUserService(repo UserRepository) *UserService {
+	return &UserService{
 		repo: repo,
 	}
 }
 
-func (s *userService) CreateUser(email, name string) (*User, error) {
-	var existingUser User
-	if err := s.repo.FindByEmail(email, &existingUser); err == nil {
+func (s *UserService) CreateUser(email string, name string) (*User, error) {
+	foundUser, err := s.repo.FindByEmail(email)
+
+	// Todo: Check if error is an actual db operation error
+
+	if foundUser != nil {
 		return nil, errors.New("user already exists")
 	}
 
-	user := &User{
-		Name:  name,
-		Email: email,
-	}
-
-	err := s.repo.Create(user)
+	user, err := s.repo.Create(email, name)
 	if err != nil {
 		return nil, err
 	}
 
+	log.Println("ABOUT TO RETURN USER FROM SERVICE")
+
 	return user, nil
 }
 
-func (s *userService) GetUserByID(id uint) (*User, error) {
+func (s *UserService) GetUserByID(id uint) (*User, error) {
 	return s.repo.FindByID(id)
 }

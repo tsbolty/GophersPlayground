@@ -11,10 +11,6 @@ type User {
   email: String!
 }
 
-type Query {
-  todos: [Todo!]!
-}
-
 input NewTodo {
   text: String!
   userId: String!
@@ -28,4 +24,8 @@ input NewUser {
 type Mutation {
   createTodo(input: NewTodo!): Todo!
   createUser(input: NewUser!): User!
+}
+
+type Query {
+  todos: [Todo!]!
 }

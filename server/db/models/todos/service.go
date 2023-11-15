@@ -1,21 +1,21 @@
 package todos
 
-type TodoService interface {
-	CreateTodo(text string, userId uint) (*Todo, error)
-	GetTodoByID(id uint) (*Todo, error)
-}
+// type TodoService interface {
+// 	CreateTodo(text string, userId uint) (*Todo, error)
+// 	GetTodoByID(id uint) (*Todo, error)
+// 	GetAllTodos() ([]*Todo, error)
+// }
 
-type todoService struct {
+type TodoService struct {
 	repo TodoRepository
 }
 
-func NewTodoService(repo TodoRepository) TodoService {
-	return &todoService{
+func NewTodoService(repo TodoRepository) *TodoService {
+	return &TodoService{
 		repo: repo,
 	}
 }
-
-func (s *todoService) CreateTodo(text string, userId uint) (*Todo, error) {
+func (s *TodoService) CreateTodo(text string, userId uint) (*Todo, error) {
 	newTodo := &Todo{
 		Text:   text,
 		Done:   false,
@@ -29,6 +29,10 @@ func (s *todoService) CreateTodo(text string, userId uint) (*Todo, error) {
 	return createdTodo, nil
 }
 
-func (s *todoService) GetTodoByID(id uint) (*Todo, error) {
+func (s *TodoService) GetTodoByID(id uint) (*Todo, error) {
 	return s.repo.FindByID(id)
+}
+
+func (s *TodoService) GetAllTodos() ([]*Todo, error) {
+	return s.repo.FindAll()
 }

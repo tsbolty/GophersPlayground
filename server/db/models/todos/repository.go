@@ -8,7 +8,8 @@ import (
 type TodoRepository interface {
 	Create(todo *Todo) (*Todo, error)
 	FindByID(id uint) (*Todo, error)
-	// other data access operations...
+	FindAll() ([]*Todo, error)
+	FindAllByUserID(userID uint) ([]*Todo, error)
 }
 
 type todoRepository struct {
@@ -29,8 +30,20 @@ func (r *todoRepository) Create(todo *Todo) (*Todo, error) {
 	return todo, nil
 }
 
+func (r *todoRepository) FindAll() ([]*Todo, error) {
+	var todos []*Todo
+	result := r.db.Find(&todos)
+	return todos, result.Error
+}
+
 func (r *todoRepository) FindByID(id uint) (*Todo, error) {
 	var todo Todo
 	result := r.db.First(&todo, id)
 	return &todo, result.Error
+}
+
+func (r *todoRepository) FindAllByUserID(userID uint) ([]*Todo, error) {
+	var todos []*Todo
+	result := r.db.Where("user_id = ?", userID).Find(&todos)
+	return todos, result.Error
 }

@@ -5,9 +5,9 @@ import (
 )
 
 type UserRepository interface {
-	Create(user *User) error
+	Create(email string, name string) (*User, error)
 	FindByID(id uint) (*User, error)
-	FindByEmail(email string, user *User) error
+	FindByEmail(email string) (*User, error)
 }
 
 type userRepository struct {
@@ -20,8 +20,13 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 	}
 }
 
-func (r *userRepository) Create(user *User) error {
-	return r.db.Create(user).Error
+func (r *userRepository) Create(email string, name string) (*User, error) {
+	user := &User{
+		Email: email,
+		Name:  name,
+	}
+	result := r.db.Create(&user)
+	return user, result.Error
 }
 
 func (r *userRepository) FindByID(id uint) (*User, error) {
@@ -30,7 +35,9 @@ func (r *userRepository) FindByID(id uint) (*User, error) {
 	return &user, result.Error
 }
 
-func (r *userRepository) FindByEmail(email string, user *User) error {
-	result := r.db.Where("email = ?", email).First(user)
-	return result.Error // This will return gorm.ErrRecordNotFound if the user is not found
+func (r *userRepository) FindByEmail(email string) (*User, error) {
+	var user User
+	result := r.db.First(&user, "email = ?", email)
+
+	return &user, result.Error
 }

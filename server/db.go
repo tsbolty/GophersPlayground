@@ -11,18 +11,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// You can define a struct to hold your GORM DB connection
-type Store struct {
-	DB             *gorm.DB
-	UserRepository users.UserRepository
-	TodoRepository todos.TodoRepository
-}
-
-// NewStore creates a new Store with a database connection
-func NewStore(db *gorm.DB) *Store {
-	return &Store{DB: db}
-}
-
 func InitializeDB() (*gorm.DB, error) {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=UTC",
 		os.Getenv("DB_HOST"),
