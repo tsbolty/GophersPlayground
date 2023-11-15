@@ -15,6 +15,7 @@ func NewTodoService(repo TodoRepository) *TodoService {
 		repo: repo,
 	}
 }
+
 func (s *TodoService) CreateTodo(text string, userId uint) (*Todo, error) {
 	newTodo := &Todo{
 		Text:   text,

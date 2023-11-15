@@ -37,3 +37,7 @@ func (s *UserService) CreateUser(email string, name string) (*User, error) {
 func (s *UserService) GetUserByID(id uint) (*User, error) {
 	return s.repo.FindByID(id)
 }
+
+func (s *UserService) FindAllUsers() ([]*User, error) {
+	return s.repo.FindAll()
+}

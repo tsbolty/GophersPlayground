@@ -27,5 +27,6 @@ type Mutation {
 }
 
 type Query {
+  findAllUsers: [User!]!
   todos: [Todo!]!
 }

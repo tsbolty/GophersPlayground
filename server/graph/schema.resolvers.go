@@ -54,6 +54,26 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 	}, nil
 }
 
+// FindAllUsers is the resolver for the findAllUsers field.
+func (r *queryResolver) FindAllUsers(ctx context.Context) ([]*model.User, error) {
+	dbUsers, err := r.UserService.FindAllUsers()
+	if err != nil {
+		return nil, err
+	}
+
+	graphqlUsers := make([]*model.User, len(dbUsers))
+
+	for i, user := range dbUsers {
+		graphqlUsers[i] = &model.User{
+			ID:    fmt.Sprintf("%d", user.ID),
+			Name:  user.Name,
+			Email: user.Email,
+		}
+	}
+
+	return graphqlUsers, nil
+}
+
 // Todos is the resolver for the todos field.
 func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
 	todos, err := r.TodoService.GetAllTodos()

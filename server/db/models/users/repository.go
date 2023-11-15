@@ -8,6 +8,7 @@ type UserRepository interface {
 	Create(email string, name string) (*User, error)
 	FindByID(id uint) (*User, error)
 	FindByEmail(email string) (*User, error)
+	FindAll() ([]*User, error)
 }
 
 type userRepository struct {
@@ -40,4 +41,10 @@ func (r *userRepository) FindByEmail(email string) (*User, error) {
 	result := r.db.First(&user, "email = ?", email)
 
 	return &user, result.Error
+}
+
+func (r *userRepository) FindAll() ([]*User, error) {
+	var users []*User
+	result := r.db.Find(&users)
+	return users, result.Error
 }
