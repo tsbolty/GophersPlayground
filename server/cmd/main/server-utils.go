@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/tsbolty/GophersPlayground/graph"
+	"github.com/tsbolty/GophersPlayground/internal/services"
 	todos "github.com/tsbolty/GophersPlayground/internal/todo"
 	users "github.com/tsbolty/GophersPlayground/internal/user"
-	"github.com/tsbolty/GophersPlayground/pkg/services"
 	"gorm.io/gorm"
 )
 

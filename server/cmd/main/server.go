@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/99designs/gqlgen/graphql/playground"
-	db "github.com/tsbolty/GophersPlayground/pkg/db"
+	db "github.com/tsbolty/GophersPlayground/cmd/main/db"
 )
 
 const defaultPort = "8080"
