@@ -40,3 +40,7 @@ func (s *UserService) GetUserByID(id uint) (*User, error) {
 func (s *UserService) FindAllUsers() ([]*User, error) {
 	return s.repo.FindAll()
 }
+
+func (s *UserService) FindUserByEmail(email string) (*User, error) {
+	return s.repo.FindByEmail(email)
+}
