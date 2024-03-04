@@ -14,7 +14,7 @@ func NewUserService(repo UserRepository) *UserService {
 	}
 }
 
-func (s *UserService) CreateUser(email string, name string) (*User, error) {
+func (s *UserService) CreateUser(email string, name string, password string) (*User, error) {
 	// foundUser, err := s.repo.FindByEmail(email)
 
 	// Todo: Check if error is an actual db operation error
@@ -23,7 +23,7 @@ func (s *UserService) CreateUser(email string, name string) (*User, error) {
 	// 	return nil, errors.New("user already exists")
 	// }
 
-	user, err := s.repo.Create(email, name)
+	user, err := s.repo.Create(email, name, password)
 	if err != nil {
 		return nil, err
 	}
