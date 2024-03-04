@@ -7,7 +7,6 @@ package graph
 import (
 	"context"
 	"fmt"
-	"log"
 	"strconv"
 
 	"github.com/tsbolty/GophersPlayground/graph/model"
@@ -39,18 +38,36 @@ func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) 
 	return graphqlTodo, nil
 }
 
-// CreateUser is the resolver for the createUser field.
-func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
-	log.Println("IN RESOLVER")
+// Login is the resolver for the login field.
+func (r *mutationResolver) Login(ctx context.Context, input model.LoginUser) (*model.AuthPayload, error) {
+	token, user, err := r.AuthService.AuthenticateUser(input.Email, input.Password)
+	if err != nil {
+		return nil, fmt.Errorf("failed to authenticate user")
+	}
 
-	dbUser, err := r.UserBusinessService.CreateUser(input.Email, input.Name)
+	return &model.AuthPayload{
+		Token: token,
+		User: &model.User{
+			ID:    fmt.Sprintf("%d", user.ID),
+			Name:  user.Name,
+			Email: user.Email,
+		},
+	}, nil
+}
+
+// Register is the resolver for the register field.
+func (r *mutationResolver) RegisterUser(ctx context.Context, input model.NewUser) (*model.AuthPayload, error) {
+	token, dbUser, err := r.AuthService.RegisterUser(input.Email, input.Name, input.Password)
 	if err != nil {
 		return nil, err
 	}
-	return &model.User{
-		ID:    fmt.Sprintf("%d", dbUser.ID),
-		Name:  dbUser.Name,
-		Email: dbUser.Email,
+	return &model.AuthPayload{
+		Token: token,
+		User: &model.User{
+			ID:    fmt.Sprintf("%d", dbUser.ID),
+			Name:  dbUser.Name,
+			Email: dbUser.Email,
+		},
 	}, nil
 }
 
