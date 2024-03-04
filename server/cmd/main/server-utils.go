@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/tsbolty/GophersPlayground/graph"
+	auth "github.com/tsbolty/GophersPlayground/internal/auth"
 	"github.com/tsbolty/GophersPlayground/internal/services"
 	todos "github.com/tsbolty/GophersPlayground/internal/todo"
 	users "github.com/tsbolty/GophersPlayground/internal/user"
@@ -22,10 +23,12 @@ func InitializeServices(dbInstance *gorm.DB) *handler.Server {
 	complexService := services.NewComplexService(userRepo, todoRepo)
 	todoService := services.NewTodoService(userRepo, todoRepo)
 	userService := services.NewUserService()
+	authService := auth.NewAuthService(userBusinessService)
 
 	// Set up GraphQL server with all services
 	return handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
 		Resolvers: &graph.Resolver{
+			AuthService:         authService,
 			UserBusinessService: userBusinessService,
 			TodoBusinessService: todoBusinessService,
 			ComplexService:      complexService,

@@ -5,7 +5,7 @@ import (
 )
 
 type UserRepository interface {
-	Create(email string, name string) (*User, error)
+	Create(email string, name string, password string) (*User, error)
 	FindByID(id uint) (*User, error)
 	FindByEmail(email string) (*User, error)
 	FindAll() ([]*User, error)
@@ -21,10 +21,11 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 	}
 }
 
-func (r *userRepository) Create(email string, name string) (*User, error) {
+func (r *userRepository) Create(email string, name string, password string) (*User, error) {
 	user := &User{
-		Email: email,
-		Name:  name,
+		Email:    email,
+		Name:     name,
+		Password: password,
 	}
 	result := r.db.Create(&user)
 	return user, result.Error
