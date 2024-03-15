@@ -16,7 +16,7 @@ import (
 // AuthMiddleware checks for the presence of an Authorization header and validates the JWT token
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.Contains(r.URL.Path, "/query") {
+		if strings.Contains(r.URL.Path, "/api/graphql") {
 			operationName, err := getOperationNameFromRequest(r)
 			if err != nil {
 				fmt.Println("Error reading request body:", err)

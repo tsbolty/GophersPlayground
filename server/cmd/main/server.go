@@ -34,8 +34,8 @@ func main() {
 	// Wrap the srv with the AuthMiddleware
 	authedGraphQLServer := middleware.AuthMiddleware(srv)
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", authedGraphQLServer)
+	http.Handle("/", playground.Handler("GraphQL playground", "/api/graphql"))
+	http.Handle("/api/graphql", authedGraphQLServer)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
