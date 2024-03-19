@@ -85,7 +85,7 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	refreshTokenCookie, err := r.Cookie("auth_token")
+	refreshTokenCookie, err := r.Cookie("refresh_token")
 	if err != nil {
 		if err == http.ErrNoCookie {
 			http.Error(w, "Refresh token not provided", http.StatusUnauthorized)
@@ -108,7 +108,7 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     "auth_token",
+		Name:     "refresh_token",
 		Value:    newRefreshToken,
 		HttpOnly: true,
 		Path:     "/",
