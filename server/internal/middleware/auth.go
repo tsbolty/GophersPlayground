@@ -13,6 +13,10 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
+type contextKey string
+
+const userContextKey contextKey = "user"
+
 // AuthMiddleware checks for the presence of an Authorization header and validates the JWT token
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +53,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		// Extract claims and attach to context
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			ctx := context.WithValue(r.Context(), "user", claims)
+			ctx := context.WithValue(r.Context(), userContextKey, claims)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		} else {
 			http.Error(w, "Invalid token claims", http.StatusUnauthorized)

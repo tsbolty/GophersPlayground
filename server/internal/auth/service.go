@@ -8,7 +8,11 @@ import (
 )
 
 type AuthService struct {
-	UserService *users.UserService
+	UserService          *users.UserService
+	GenerateNewTokens    func(userID uint) (string, string, error)
+	GenerateAccessToken  func(userId uint) (string, error)
+	GenerateRefreshToken func(userId uint) (string, error)
+	ValidateRefreshToken func(token string) (uint, error)
 }
 
 type LoginRequest struct {
@@ -31,46 +35,45 @@ func NewAuthService(userService *users.UserService) *AuthService {
 	}
 }
 
-func (a *AuthService) AuthenticateUser(email string, password string) (token string, user *users.User, err error) {
+func (a *AuthService) AuthenticateUser(email string, password string) (accessToken string, refreshToken string, user *users.User, err error) {
 	user, err = a.UserService.FindUserByEmail(email)
 	if err != nil {
-		return "", nil, err // User not found or other error
+		return "", "", nil, err // User not found or other error
 	}
 
 	// Verify password
 	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		return "", nil, err // Invalid password
+		return "", "", nil, err // Invalid password
 	}
 
-	token, err = GenerateToken(user.ID)
-	if err != nil {
-		return "", nil, err // Error generating token
+	accessToken, refreshToken, tokenErr := GenerateNewTokens(user.ID)
+	if tokenErr != nil {
+		return "", "", nil, err // Error generating token
 	}
 
-	return token, user, nil
+	return accessToken, refreshToken, user, nil
 }
 
-func (a *AuthService) RegisterUser(email string, name string, password string) (token string, user *users.User, err error) {
+func (a *AuthService) RegisterUser(email string, name string, password string) (toaccessToken string, refreshToken string, user *users.User, err error) {
 	fmt.Println("RegisterUser")
 	// Hash password
 	hashedPassword, err := hashPassword(password)
 	fmt.Println("hashedPassword", hashedPassword)
 	if err != nil {
-		return "", nil, err
+		return "", "", nil, err
 	}
 
 	user, err = a.UserService.CreateUser(email, name, hashedPassword)
-	fmt.Println("CREATED USER", user)
 	if err != nil {
-		return "", nil, err
+		return "", "", nil, err
 	}
 
-	token, err = GenerateToken(user.ID)
-	if err != nil {
-		return "", nil, err
+	accessToken, refreshToken, tokenErr := GenerateNewTokens(user.ID)
+	if tokenErr != nil {
+		return "", "", nil, err // Error generating token
 	}
 
-	return token, user, nil
+	return accessToken, refreshToken, user, nil
 }
 
 func hashPassword(password string) (string, error) {
