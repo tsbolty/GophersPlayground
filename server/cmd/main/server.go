@@ -7,6 +7,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/playground"
 	db "github.com/tsbolty/GophersPlayground/cmd/main/db"
+	auth "github.com/tsbolty/GophersPlayground/internal/auth"
 	"github.com/tsbolty/GophersPlayground/internal/middleware"
 )
 
@@ -33,6 +34,9 @@ func main() {
 
 	// Wrap the srv with the AuthMiddleware
 	authedGraphQLServer := middleware.AuthMiddleware(srv)
+
+	// handle token refresh
+	http.HandleFunc("/api/token/refresh", auth.RefreshTokenHandler)
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/api/graphql"))
 	http.Handle("/api/graphql", authedGraphQLServer)

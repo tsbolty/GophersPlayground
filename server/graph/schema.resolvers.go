@@ -12,24 +12,6 @@ import (
 	"github.com/tsbolty/GophersPlayground/graph/model"
 )
 
-// RefreshToken is the resolver for the refreshToken field.
-func (r *mutationResolver) RefreshToken(ctx context.Context, refreshToken string) (*model.AuthPayload, error) {
-	refreshTokenUint, err := strconv.ParseUint(refreshToken, 10, 64)
-	if err != nil {
-		return nil, err
-	}
-
-	accessToken, newRefreshToken, err := r.AuthService.GenerateNewTokens(uint(refreshTokenUint))
-	if err != nil {
-		return nil, err
-	}
-
-	return &model.AuthPayload{
-		AccessToken:  accessToken,
-		RefreshToken: newRefreshToken,
-	}, nil
-}
-
 // CreateTodo is the resolver for the createTodo field.
 func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
 	userID, err := strconv.ParseUint(input.UserID, 10, 64)
@@ -151,6 +133,22 @@ type queryResolver struct{ *Resolver }
 //   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
 //     it when you're done.
 //   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *mutationResolver) RefreshToken(ctx context.Context, refreshToken string) (*model.AuthPayload, error) {
+	refreshTokenUint, err := strconv.ParseUint(refreshToken, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	accessToken, newRefreshToken, err := r.AuthService.GenerateNewTokens(uint(refreshTokenUint))
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.AuthPayload{
+		AccessToken:  accessToken,
+		RefreshToken: newRefreshToken,
+	}, nil
+}
 func (r *mutationResolver) RefreshAccessToken(ctx context.Context, refreshToken string) (*model.AuthPayload, error) {
 	refreshTokenUint, err := strconv.ParseUint(refreshToken, 10, 64)
 	if err != nil {
