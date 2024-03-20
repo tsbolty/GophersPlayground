@@ -53,7 +53,7 @@ func (a *AuthService) AuthenticateUser(email string, password string) (accessTok
 	}
 
 	// set redis session
-	err = redis.SetUserSession(int(user.ID), refreshToken, time.Hour*24*7)
+	err = redis.SetUserSession(int(user.ID), refreshToken, accessToken, time.Hour*24*7)
 	if err != nil {
 		return "", "", nil, err
 	}
@@ -81,7 +81,7 @@ func (a *AuthService) RegisterUser(email string, name string, password string) (
 	}
 
 	// set redis session
-	err = redis.SetUserSession(int(user.ID), refreshToken, time.Hour*24*7)
+	err = redis.SetUserSession(int(user.ID), refreshToken, accessToken, time.Hour*24*7)
 	if err != nil {
 		return "", "", nil, err
 	}
@@ -118,7 +118,7 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update the user's session in Redis with the new refresh token and extend the session's expiration
-	err = redis.SetUserSession(int(validatedRefreshToken), newRefreshToken, time.Hour*24*7)
+	err = redis.SetUserSession(int(validatedRefreshToken), newRefreshToken, accessToken, time.Hour*24*7)
 	if err != nil {
 		http.Error(w, "Failed to update user session", http.StatusInternalServerError)
 		return

@@ -27,12 +27,15 @@ func InitializeRedis() {
 	log.Println("Connected to Redis")
 }
 
-func SetUserSession(userID int, refreshToken string, expiration time.Duration) error {
+func SetUserSession(userID int, refreshToken string, accessToken string, expiration time.Duration) error {
 	// Create a session key based on user ID. Example: "session:1"
 	sessionKey := fmt.Sprintf("session:%d", userID)
 
 	// Set the session key in Redis with the refresh token as its value.
-	err := Client.Set(context.Background(), sessionKey, refreshToken, expiration).Err()
+	err := Client.Set(context.Background(), sessionKey, map[string]interface{}{
+		"refreshToken": refreshToken,
+		"accessToken":  accessToken,
+	}, expiration).Err()
 	if err != nil {
 		return fmt.Errorf("failed to set user session in Redis: %w", err)
 	}
