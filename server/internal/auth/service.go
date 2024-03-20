@@ -137,6 +137,16 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"accessToken": accessToken, "refreshToken": newRefreshToken})
 }
 
+func (a *AuthService) LogoutUser(userID int) error {
+	// Invalidate the refresh token by removing the session from Redis.
+	err := redis.DeleteUserSession(userID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func hashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return string(bytes), err

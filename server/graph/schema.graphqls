@@ -37,6 +37,7 @@ type Mutation {
   createTodo(input: NewTodo!): Todo!
   login(input: LoginUser!): AuthPayload!
   registerUser(input: NewUser!): AuthPayload!
+  logoutUser: Boolean!
 }
 
 type Query {

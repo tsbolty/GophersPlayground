@@ -76,6 +76,26 @@ func (r *mutationResolver) RegisterUser(ctx context.Context, input model.NewUser
 	}, nil
 }
 
+// LogoutUser is the resolver for the logoutUser field.
+func (r *mutationResolver) LogoutUser(ctx context.Context) (bool, error) {
+	// Get the user from the context
+	user := ctx.Value("user").(*model.User)
+
+	// Convert user.ID from string to int
+	userID, err := strconv.Atoi(user.ID)
+	if err != nil {
+		return false, err
+	}
+
+	// Delete the user session from Redis
+	err = r.AuthService.LogoutUser(userID)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 // FindAllUsers is the resolver for the findAllUsers field.
 func (r *queryResolver) FindAllUsers(ctx context.Context) ([]*model.User, error) {
 	dbUsers, err := r.UserBusinessService.FindAllUsers()

@@ -40,3 +40,14 @@ func SetUserSession(userID int, refreshToken string, expiration time.Duration) e
 	fmt.Printf("User session set in Redis for userID %d\n", userID)
 	return nil
 }
+
+func DeleteUserSession(userID int) error {
+	sessionKey := fmt.Sprintf("session:%d", userID)
+
+	_, err := Client.Del(context.Background(), sessionKey).Result()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
