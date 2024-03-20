@@ -9,6 +9,7 @@ import (
 	db "github.com/tsbolty/GophersPlayground/cmd/main/db"
 	auth "github.com/tsbolty/GophersPlayground/internal/auth"
 	"github.com/tsbolty/GophersPlayground/internal/middleware"
+	"github.com/tsbolty/GophersPlayground/internal/redis"
 )
 
 const defaultPort = "8080"
@@ -29,6 +30,9 @@ func main() {
 		log.Fatalf("Could not get sql.DB: %v", err)
 	}
 	defer sqlDB.Close()
+
+	// Initialize Redis
+	redis.InitializeRedis()
 
 	srv := InitializeServices(dbInstance)
 

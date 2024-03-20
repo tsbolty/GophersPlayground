@@ -1,0 +1,42 @@
+package redis
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"time"
+
+	"github.com/redis/go-redis/v9"
+)
+
+var Client *redis.Client
+
+func InitializeRedis() {
+	Client = redis.NewClient(&redis.Options{
+		Addr:     "redis:6379",
+		Password: "",
+		DB:       0,
+	})
+
+	// Verify connection
+	_, err := Client.Ping(context.Background()).Result()
+	if err != nil {
+		log.Fatalf("Could not connect to Redis: %v", err)
+	}
+
+	log.Println("Connected to Redis")
+}
+
+func SetUserSession(userID int, refreshToken string, expiration time.Duration) error {
+	// Create a session key based on user ID. Example: "session:1"
+	sessionKey := fmt.Sprintf("session:%d", userID)
+
+	// Set the session key in Redis with the refresh token as its value.
+	err := Client.Set(context.Background(), sessionKey, refreshToken, expiration).Err()
+	if err != nil {
+		return fmt.Errorf("failed to set user session in Redis: %w", err)
+	}
+
+	fmt.Printf("User session set in Redis for userID %d\n", userID)
+	return nil
+}
