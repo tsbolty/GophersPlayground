@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
-	users "github.com/tsbolty/GophersPlayground/internal/user"
 	"golang.org/x/crypto/bcrypt"
+
+	redis "github.com/tsbolty/GophersPlayground/internal/redis"
+	users "github.com/tsbolty/GophersPlayground/internal/user"
 )
 
 type AuthService struct {
@@ -49,9 +52,10 @@ func (a *AuthService) AuthenticateUser(email string, password string) (accessTok
 		return "", "", nil, err // Invalid password
 	}
 
-	accessToken, refreshToken, tokenErr := GenerateNewTokens(user.ID)
-	if tokenErr != nil {
-		return "", "", nil, err // Error generating token
+	// set redis session
+	err = redis.SetUserSession(int(user.ID), refreshToken, time.Hour*24*7)
+	if err != nil {
+		return "", "", nil, err
 	}
 
 	return accessToken, refreshToken, user, nil
@@ -74,6 +78,12 @@ func (a *AuthService) RegisterUser(email string, name string, password string) (
 	accessToken, refreshToken, tokenErr := GenerateNewTokens(user.ID)
 	if tokenErr != nil {
 		return "", "", nil, err // Error generating token
+	}
+
+	// set redis session
+	err = redis.SetUserSession(int(user.ID), refreshToken, time.Hour*24*7)
+	if err != nil {
+		return "", "", nil, err
 	}
 
 	return accessToken, refreshToken, user, nil
@@ -104,6 +114,13 @@ func RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 	accessToken, newRefreshToken, err := GenerateNewTokens(validatedRefreshToken)
 	if err != nil {
 		http.Error(w, "Failed to generate new tokens", http.StatusInternalServerError)
+		return
+	}
+
+	// Update the user's session in Redis with the new refresh token and extend the session's expiration
+	err = redis.SetUserSession(int(validatedRefreshToken), newRefreshToken, time.Hour*24*7)
+	if err != nil {
+		http.Error(w, "Failed to update user session", http.StatusInternalServerError)
 		return
 	}
 
