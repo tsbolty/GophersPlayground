@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -31,11 +32,16 @@ func SetUserSession(userID int, refreshToken string, accessToken string, expirat
 	// Create a session key based on user ID. Example: "session:1"
 	sessionKey := fmt.Sprintf("session:%d", userID)
 
-	// Set the session key in Redis with the refresh token as its value.
-	err := Client.Set(context.Background(), sessionKey, map[string]interface{}{
+	sessionData, marshallErr := json.Marshal(map[string]interface{}{
 		"refreshToken": refreshToken,
 		"accessToken":  accessToken,
-	}, expiration).Err()
+	})
+	if marshallErr != nil {
+		return fmt.Errorf("failed to marshal user session data: %w", marshallErr)
+	}
+
+	// Set the session key in Redis with the refresh token as its value.
+	err := Client.Set(context.Background(), sessionKey, sessionData, expiration).Err()
 	if err != nil {
 		return fmt.Errorf("failed to set user session in Redis: %w", err)
 	}

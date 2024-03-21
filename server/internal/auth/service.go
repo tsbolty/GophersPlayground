@@ -52,6 +52,11 @@ func (a *AuthService) AuthenticateUser(email string, password string) (accessTok
 		return "", "", nil, err // Invalid password
 	}
 
+	accessToken, refreshToken, tokenErr := GenerateNewTokens(user.ID)
+	if tokenErr != nil {
+		return "", "", nil, err // Error generating token
+	}
+
 	// set redis session
 	err = redis.SetUserSession(int(user.ID), refreshToken, accessToken, time.Hour*24*7)
 	if err != nil {
