@@ -5,33 +5,27 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/tsbolty/GophersPlayground/internal/auth"
+	"github.com/tsbolty/GophersPlayground/internal/redis"
 )
 
 type contextKey string
 
 const userContextKey contextKey = "user"
 
-// AuthMiddleware checks for the presence of an Authorization header and validates the JWT token
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.Contains(r.URL.Path, "/api/graphql") {
-			operationName, err := getOperationNameFromRequest(r)
-			if err != nil {
-				fmt.Println("Error reading request body:", err)
-				http.Error(w, "Error reading request body", http.StatusInternalServerError)
-				return
-			}
-			if operationName == "login" || operationName == "register" {
-				fmt.Println("Skipping auth for operation:", operationName)
-				next.ServeHTTP(w, r)
-				return
-			}
+		// Skip authentication for login and register operations
+		if isAuthExempted(r) {
+			next.ServeHTTP(w, r)
+			return
 		}
 
 		authHeader := r.Header.Get("Authorization")
@@ -40,24 +34,84 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		// Validate access token
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			// Return the key for validation
-			return []byte(os.Getenv("JWT_SECRET")), nil
-		})
-
-		if err != nil || !token.Valid {
-			http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
+		claims, err := validateToken(tokenString)
+		if err != nil {
+			handleTokenError(w, err)
 			return
 		}
 
-		// Extract claims and attach to context
-		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			ctx := context.WithValue(r.Context(), userContextKey, claims)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		} else {
-			http.Error(w, "Invalid token claims", http.StatusUnauthorized)
+		userId := int(claims["id"].(float64))
+
+		// Refresh the token if needed
+		if shouldRefreshToken(claims) {
+			if err := refreshTokenAndSetSession(w, userId); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
+
+		// Attach claims to context and continue
+		ctx := context.WithValue(r.Context(), userContextKey, claims)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func isAuthExempted(r *http.Request) bool {
+	operationName, _ := getOperationNameFromRequest(r)
+	return operationName == "login" || operationName == "register"
+}
+
+func validateToken(tokenString string) (jwt.MapClaims, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("JWT_SECRET")), nil
+	})
+	if err != nil || !token.Valid {
+		return nil, fmt.Errorf("invalid or expired token")
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, fmt.Errorf("invalid token claims")
+}
+
+func shouldRefreshToken(claims jwt.MapClaims) bool {
+	exp := int64(claims["exp"].(float64))
+	return exp < (time.Now().Unix() + 30)
+}
+
+func refreshTokenAndSetSession(w http.ResponseWriter, userId int) error {
+	newAccessToken, newRefreshToken, err := auth.GenerateNewTokens(uint(userId))
+	if err != nil {
+		return err
+	}
+
+	// Update Redis session and response cookies/headers with new tokens
+	updateSessionAndResponse(w, userId, newAccessToken, newRefreshToken)
+	return nil
+}
+
+func updateSessionAndResponse(w http.ResponseWriter, userId int, accessToken, refreshToken string) {
+	// Update Redis session with new access token
+	redis.SetUserSession(userId, accessToken, refreshToken, time.Hour*24)
+
+	// Set new tokens in response
+	setRefreshTokenCookie(w, refreshToken)
+	w.Header().Set("Authorization", "Bearer "+accessToken)
+}
+
+func setRefreshTokenCookie(w http.ResponseWriter, refreshToken string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		Expires:  time.Now().Add(time.Hour * 24 * 7),
+		HttpOnly: true,
+		Path:     "/",
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
 	})
 }
 
@@ -72,12 +126,12 @@ func getOperationNameFromRequest(r *http.Request) (string, error) {
 		return "", nil
 	}
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return "", err
 	}
 	// Restore the body for future readers
-	r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	// Check if body contains specific operations
 	query := string(body)
@@ -96,4 +150,8 @@ func getOperationNameFromRequest(r *http.Request) (string, error) {
 
 	// Default to not finding a specific operation
 	return "", nil
+}
+
+func handleTokenError(w http.ResponseWriter, err error) {
+	http.Error(w, err.Error(), http.StatusUnauthorized)
 }

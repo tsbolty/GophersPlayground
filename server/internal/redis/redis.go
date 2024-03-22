@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -14,7 +15,7 @@ var Client *redis.Client
 
 func InitializeRedis() {
 	Client = redis.NewClient(&redis.Options{
-		Addr:     "redis:6379",
+		Addr:     os.Getenv("REDIS_HOST") + ":" + os.Getenv("REDIS_PORT"),
 		Password: "",
 		DB:       0,
 	})
@@ -33,6 +34,7 @@ func SetUserSession(userID int, refreshToken string, accessToken string, expirat
 	sessionKey := fmt.Sprintf("session:%d", userID)
 
 	sessionData, marshallErr := json.Marshal(map[string]interface{}{
+		"userID":       userID,
 		"refreshToken": refreshToken,
 		"accessToken":  accessToken,
 	})
