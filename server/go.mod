@@ -27,6 +27,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/rs/cors v1.10.1 // indirect
 	github.com/sosodev/duration v1.1.0 // indirect
 	golang.org/x/sync v0.5.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
