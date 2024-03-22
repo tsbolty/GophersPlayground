@@ -16,6 +16,10 @@ import (
 func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
 	userID, err := strconv.ParseUint(input.UserID, 10, 64)
 
+	if err != nil {
+		return nil, err
+	}
+
 	// On 32-bit systems, check for overflow
 	if uint64(uint(userID)) != userID {
 		// Handle the overflow, for example, return a GraphQL error
@@ -23,7 +27,6 @@ func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) 
 	}
 
 	todo, err := r.TodoService.CreateTodoForUser(input.Text, uint(userID))
-
 	if err != nil {
 		return nil, err
 	}
@@ -40,13 +43,14 @@ func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) 
 
 // Login is the resolver for the login field.
 func (r *mutationResolver) Login(ctx context.Context, input model.LoginUser) (*model.AuthPayload, error) {
-	token, user, err := r.AuthService.AuthenticateUser(input.Email, input.Password)
+	accessToken, refreshToken, user, err := r.AuthService.AuthenticateUser(input.Email, input.Password)
 	if err != nil {
 		return nil, fmt.Errorf("failed to authenticate user")
 	}
 
 	return &model.AuthPayload{
-		Token: token,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 		User: &model.User{
 			ID:    fmt.Sprintf("%d", user.ID),
 			Name:  user.Name,
@@ -57,18 +61,39 @@ func (r *mutationResolver) Login(ctx context.Context, input model.LoginUser) (*m
 
 // Register is the resolver for the register field.
 func (r *mutationResolver) RegisterUser(ctx context.Context, input model.NewUser) (*model.AuthPayload, error) {
-	token, dbUser, err := r.AuthService.RegisterUser(input.Email, input.Name, input.Password)
+	accessToken, refreshToken, dbUser, err := r.AuthService.RegisterUser(input.Email, input.Name, input.Password)
 	if err != nil {
 		return nil, err
 	}
 	return &model.AuthPayload{
-		Token: token,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 		User: &model.User{
 			ID:    fmt.Sprintf("%d", dbUser.ID),
 			Name:  dbUser.Name,
 			Email: dbUser.Email,
 		},
 	}, nil
+}
+
+// LogoutUser is the resolver for the logoutUser field.
+func (r *mutationResolver) LogoutUser(ctx context.Context) (bool, error) {
+	// Get the user from the context
+	user := ctx.Value("user").(*model.User)
+
+	// Convert user.ID from string to int
+	userID, err := strconv.Atoi(user.ID)
+	if err != nil {
+		return false, err
+	}
+
+	// Delete the user session from Redis
+	err = r.AuthService.LogoutUser(userID)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 // FindAllUsers is the resolver for the findAllUsers field.
@@ -121,3 +146,42 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *mutationResolver) RefreshToken(ctx context.Context, refreshToken string) (*model.AuthPayload, error) {
+	refreshTokenUint, err := strconv.ParseUint(refreshToken, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	accessToken, newRefreshToken, err := r.AuthService.GenerateNewTokens(uint(refreshTokenUint))
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.AuthPayload{
+		AccessToken:  accessToken,
+		RefreshToken: newRefreshToken,
+	}, nil
+}
+func (r *mutationResolver) RefreshAccessToken(ctx context.Context, refreshToken string) (*model.AuthPayload, error) {
+	refreshTokenUint, err := strconv.ParseUint(refreshToken, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	accessToken, newRefreshToken, err := r.AuthService.GenerateNewTokens(uint(refreshTokenUint))
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.AuthPayload{
+		AccessToken:  accessToken,
+		RefreshToken: newRefreshToken,
+	}, nil
+}

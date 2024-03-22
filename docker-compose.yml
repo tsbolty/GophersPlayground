@@ -1,7 +1,7 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  api:
+  go-server:
     build: ./server
     ports:
       - "8080:8080"
@@ -12,10 +12,10 @@ services:
     environment:
       - DATABASE_URL=postgres://${DB_USER}:${DB_PASS}@db:${DB_PORT}/${DB_NAME}?sslmode=disable
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
 
-  db:
+  postgres:
     image: postgres:16.0
     environment:
       POSTGRES_USER: ${DB_USER}
@@ -32,7 +32,12 @@ services:
       interval: 5s
       start_period: 2s
 
-  # frontend:
+  redis:
+    image: "redis"
+    ports:
+      - "6379:6379"
+
+  # next-web:
   #   build: ./web
   #   ports:
   #     - "3000:3000"
@@ -40,6 +45,7 @@ services:
   #     - NODE_ENV=development
   #   depends_on:
   #     - api
+  #     - redis
 
 volumes:
   postgres_data:

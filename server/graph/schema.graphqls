@@ -12,7 +12,8 @@ type User {
 }
 
 type AuthPayload {
-  token: String!
+  accessToken: String!
+  refreshToken: String!
   user: User!
 }
 
@@ -36,6 +37,7 @@ type Mutation {
   createTodo(input: NewTodo!): Todo!
   login(input: LoginUser!): AuthPayload!
   registerUser(input: NewUser!): AuthPayload!
+  logoutUser: Boolean!
 }
 
 type Query {

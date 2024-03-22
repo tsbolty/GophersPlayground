@@ -1,18 +1,21 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next';
+import { ApolloWrapper } from './lib/apollo-client';
 
 export const metadata: Metadata = {
-  title: "Cool Next.js App",
-  description: "Used for testing Next.js",
+  title: 'Cool Next.js App',
+  description: 'Used for testing Next.js'
 };
 
 export default function RootLayout({
-  children,
+  children
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang='en'>
+      <body>
+        <ApolloWrapper>{children}</ApolloWrapper>
+      </body>
     </html>
   );
 }
